@@ -8,18 +8,12 @@ _If you want to see the english version, see [here](./README-EN.md)_
 
 ## Integrantes
 
-* Yuni Quintero
-* Germán Robayo
-* Nairelys Hernandez
-* Fabiola Martinez
-* David Cabeza
-* Jose Acevedo
+* Santiago Galarza
 
 ## Tutores
 
 * Yudith Cardinale
 * Irvin Dongo
-* Ana Aguilera
 
 ## Instalación del Proyecto
 
