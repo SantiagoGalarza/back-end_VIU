@@ -195,23 +195,7 @@ function calculateTextCredibility(
       metric: "TEXT_CREDIBILITY",
     })
   );
-  try {
-    const userid: String = "test";
-    const text: String = "prueba";
-    const crediility: String = "999";
 
-    const CredibilidadAGuardar = new CredibilidadModelo({
-      userid,
-      text,
-      crediility,
-    });
-
-    CredibilidadAGuardar.save();
-
-    console.log("guardado correctamente en MongoDB");
-  } catch (error) {
-    console.log("Error en queryLogger - ini mongoDB");
-  }
   return { credibility };
 }
 
@@ -335,14 +319,17 @@ function scrapperTwitterUserCredibility(
 }
 
 async function calculateTweetCredibility(
+  usuario: string,
   tweetId: string,
   params: TweetCredibilityWeights,
   maxFollowers: number
 ): Promise<Credibility> {
   console.log("tweetId", tweetId);
+  console.log("EL usuario", usuario);
   try {
     const tweet: Tweet = await getTweetInfo(tweetId);
     const user: TwitterUser = tweet.user;
+    const nombreUsuario = usuario;
     const userCredibility: number =
       calculateUserCredibility(user) * params.weightUser;
     const textCredibility: number =
@@ -350,6 +337,18 @@ async function calculateTweetCredibility(
       params.weightText;
     const socialCredibility: number =
       calculateSocialCredibility(user, maxFollowers) * params.weightSocial;
+
+    const credibilidad = userCredibility + textCredibility + socialCredibility;
+
+    const CredibilidadAGuardar = new CredibilidadModelo({
+      nombreUsuario,
+      tweetId,
+      credibilidad,
+    });
+
+    CredibilidadAGuardar.save();
+
+    console.log("guardado correctamente en MongoDB");
 
     return {
       credibility: userCredibility + textCredibility + socialCredibility,

@@ -119,6 +119,7 @@ calculatorRoutes.get(
     }
     res.json(
       await calculateTweetCredibility(
+        req.query.usuario,
         req.query.tweetId,
         {
           weightBadWords: +req.query.weightBadWords,

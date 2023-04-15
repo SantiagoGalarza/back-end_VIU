@@ -41,9 +41,9 @@ export interface Credibilidad extends mongoose.Document {
 }
 
 const CredibilidadSchema = new Schema({
-  userid: String,
-  text: String,
-  crediility: String,
+  nombreUsuario: String,
+  tweetId: String,
+  credibilidad: String,
 });
 
-export default model("CredibilidadModelo", CredibilidadSchema);
+export default model("cat_credibilidades", CredibilidadSchema);
