@@ -239,19 +239,40 @@ async function MongoDBData(userId: string) {
   // devolver datos de Mongo
   try {
 
-    const datosg = await CredibilidadModelo.find({nombreUsuario:  userId }, 'credibilidad').exec();
-    //mongoose.Collection.find({tweetId: {$eq:fizzvr}})
-    
-   /* const foundUsers = await readOnlyClient.v1.user({ screen_name: userId });
+    const conteo = await CredibilidadModelo.find({nombreUsuario:  userId }, 'credibilidad').count().exec();
 
-    let constructor = {
-      verified: foundUsers.verified,
-      yearJoined: moment(foundUsers.created_at).format("YYYY"),
-      followersCount: foundUsers.followers_count,
-      friendsCount: foundUsers.friends_count,
-    };*/
-    
+    const datosg = await CredibilidadModelo.aggregate( [
+  { $group: { _id: "$nombreUsuario", totalQuantity: { $sum: "credibilidad" } }  },
+  { $sort: { totalQuantity: 1 }  }
+]
+);
+
+const conteo1 = await CredibilidadModelo.aggregate( [
+  {
+     $setWindowFields: {
+        partitionBy: "$nombreUsuario",
+        sortBy: { orderDate: 1 },
+        output: {
+           sumQuantityForState: {
+              $sum: "$credibilidad",
+              window: {
+                 documents: [ "unbounded", "current" ]
+              }
+           }
+        }
+     }
+  }
+] );
+
+const datosg1 = await CredibilidadModelo.aggregate([
+  { $project: { credy: { $sum: "$credibilidad"} } }
+]);
+
     console.log(datosg);
+    console.log(conteo);
+    console.log(conteo1);
+    console.log(datosg1);
+    
     return datosg;
   } catch (error) {
     console.log(error);
