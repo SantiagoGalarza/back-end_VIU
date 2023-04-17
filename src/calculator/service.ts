@@ -235,50 +235,6 @@ async function getUserInfo(userId: string) {
   } */
 }
 
-async function MongoDBData(userId: string) {
-  // devolver datos de Mongo
-  try {
-
-    const conteo = await CredibilidadModelo.find({nombreUsuario:  userId }, 'credibilidad').count().exec();
-
-    const datosg = await CredibilidadModelo.aggregate( [
-  { $group: { _id: "$nombreUsuario", totalQuantity: { $sum: "credibilidad" } }  },
-  { $sort: { totalQuantity: 1 }  }
-]
-);
-
-const conteo1 = await CredibilidadModelo.aggregate( [
-  {
-     $setWindowFields: {
-        partitionBy: "$nombreUsuario",
-        sortBy: { orderDate: 1 },
-        output: {
-           sumQuantityForState: {
-              $sum: "$credibilidad",
-              window: {
-                 documents: [ "unbounded", "current" ]
-              }
-           }
-        }
-     }
-  }
-] );
-
-const datosg1 = await CredibilidadModelo.aggregate([
-  { $project: { credy: { $sum: "$credibilidad"} } }
-]);
-
-    console.log(datosg);
-    console.log(conteo);
-    console.log(conteo1);
-    console.log(datosg1);
-    
-    return datosg;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 async function getUserInfoUsername(userId: string) {
   try {
     const userTimeline = await readOnlyClient.v1.userTimelineByUsername(userId);
@@ -345,12 +301,20 @@ async function twitterUserCredibility(userId: string) {
   });
 }
 
-function calculateHistoricalCredibility(userId: any): number {
-  //cálculo historico esto va al front
-  /*const testeado = MongoDBData(
-    userId
-  );*/
-  return Math.min(100, 55);
+async function calculateHistoricalCredibility(userID: string) {
+  const allTweets = await CredibilidadModelo.find({ nombreUsuario: userID });
+  console.log('allTweets', allTweets);
+  const cuantosTweets = allTweets.length;
+  console.log('cuantosTweets', cuantosTweets);
+  let credibilidadTotal = 0;
+  allTweets.forEach((tweet) => {
+    credibilidadTotal += Number(tweet.credibilidad);
+  });
+  let total = 0;
+  total = credibilidadTotal / cuantosTweets;
+  console.log('total', total);
+
+  return total ? total : 0;
 }
 
 async function twitterUserCredibilityByUsername(userId: string) {
@@ -392,8 +356,8 @@ async function calculateTweetCredibility(
       calculateTextCredibility(tweet.text, params).credibility * params.weightText;
     const socialCredibility: number =
       calculateSocialCredibility(user, maxFollowers) * params.weightSocial;
-    const historicCredibility: number =
-      calculateHistoricalCredibility(user) * params.weightHistoric;
+    const historico = await calculateHistoricalCredibility(usuario);
+    const historicCredibility = historico * params.weightHistoric;
 
     const credibilidad = userCredibility + textCredibility + socialCredibility + historicCredibility;
 
@@ -459,17 +423,17 @@ async function socialCredibility(userID: string, maxFollowers: number) {
 
 async function historicalCredibility(userID: string) {
   //buscar en mongodb 
-  const response = await MongoDBData(userID);
+  const allTweets = await CredibilidadModelo.find({ nombreUsuario: userID });
+  let cuantosTweets = allTweets.length;
+  let credibilidadTotal = 0;
+  allTweets.forEach((tweet) => {
+    credibilidadTotal += Number(tweet.credibilidad);
+  });
+  let total = 0;
+  total = credibilidadTotal / cuantosTweets;
 
-  let dato1 = 10;
-  let dato2 = 20;
-  let dato3 = 30;
-  let contador = 3;
-
-
-  ////console.log("es la ultima response", response);
   return {
-    credibility: (dato1+dato2+dato3)/contador,
+    credibility: total
   };
 }
 
