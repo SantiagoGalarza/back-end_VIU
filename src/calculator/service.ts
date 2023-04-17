@@ -20,6 +20,8 @@ import("../views/database");
 import moment from "moment";
 
 import CredibilidadModelo, { Credibilidad } from "./models";
+import { mongodb } from "../views/keys";
+import mongoose, { mongo } from "mongoose";
 
 // Instantiate with desired auth type (here's Bearer v2 auth)
 const twitterClient = new TwitterApi({
@@ -210,14 +212,14 @@ async function getUserInfo(userId: string) {
     // const foundUsers = await readOnlyClient.v1.searchUsers("fizzvr");
     const foundUsers = await readOnlyClient.v1.user({ screen_name: userId });
     /*     const fetchedInfo = foundUsers.users; */
-    console.log(foundUsers);
+    ////console.log('data completa', foundUsers);
     let construccion = {
       verified: foundUsers.verified,
       yearJoined: moment(foundUsers.created_at).format("YYYY"),
-      followerCount: foundUsers.followers_count,
-      friendsCounts: foundUsers.friends_count,
+      followersCount: foundUsers.followers_count,
+      friendsCount: foundUsers.friends_count,
     };
-    console.log(construccion);
+    ////console.log(construccion);
     return construccion;
   } catch (error) {
     console.log(error);
@@ -231,6 +233,29 @@ async function getUserInfo(userId: string) {
     console.log(e)
     throw e
   } */
+}
+
+async function MongoDBData(userId: string) {
+  // devolver datos de Mongo
+  try {
+
+    const datosg = await CredibilidadModelo.find({nombreUsuario:  userId }, 'credibilidad').exec();
+    //mongoose.Collection.find({tweetId: {$eq:fizzvr}})
+    
+   /* const foundUsers = await readOnlyClient.v1.user({ screen_name: userId });
+
+    let constructor = {
+      verified: foundUsers.verified,
+      yearJoined: moment(foundUsers.created_at).format("YYYY"),
+      followersCount: foundUsers.followers_count,
+      friendsCount: foundUsers.friends_count,
+    };*/
+    
+    console.log(datosg);
+    return datosg;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function getUserInfoUsername(userId: string) {
@@ -281,7 +306,9 @@ function calculateSocialCredibility(user: any, maxFollowers: number): number {
     user.followersCount,
     maxFollowers
   );
+  ////console.log('aca si llega:', user.friendsCount);
   const ffProportionCalc = ffProportion(user.followersCount, user.friendsCount);
+  ////console.log('valor:', Math.min(100, followersImpactCalc + ffProportionCalc));
   return Math.min(100, followersImpactCalc + ffProportionCalc);
 }
 
@@ -295,6 +322,14 @@ async function twitterUserCredibility(userId: string) {
       credibility: calculateUserCredibility(response),
     };
   });
+}
+
+function calculateHistoricalCredibility(userId: any): number {
+  //cálculo historico esto va al front
+  /*const testeado = MongoDBData(
+    userId
+  );*/
+  return Math.min(100, 55);
 }
 
 async function twitterUserCredibilityByUsername(userId: string) {
@@ -333,12 +368,13 @@ async function calculateTweetCredibility(
     const userCredibility: number =
       calculateUserCredibility(user) * params.weightUser;
     const textCredibility: number =
-      calculateTextCredibility(tweet.text, params).credibility *
-      params.weightText;
+      calculateTextCredibility(tweet.text, params).credibility * params.weightText;
     const socialCredibility: number =
       calculateSocialCredibility(user, maxFollowers) * params.weightSocial;
+    const historicCredibility: number =
+      calculateHistoricalCredibility(user) * params.weightHistoric;
 
-    const credibilidad = userCredibility + textCredibility + socialCredibility;
+    const credibilidad = userCredibility + textCredibility + socialCredibility + historicCredibility;
 
     const CredibilidadAGuardar = new CredibilidadModelo({
       nombreUsuario,
@@ -387,15 +423,32 @@ function ffProportion(userFollowers: number, userFollowing: number): number {
   if (userFollowers === 0 && userFollowing === 0) {
     return 0;
   } else {
+   //// console.log('seguidores c', userFollowing)
     return (userFollowers / (userFollowers + userFollowing)) * 50;
   }
 }
 
 async function socialCredibility(userID: string, maxFollowers: number) {
   const response = await getUserInfo(userID);
-  console.log("es la ultima response", response);
+  ////console.log("es la ultima response", response);
   return {
-    credibility: calculateSocialCredibility(response, 16),
+    credibility: calculateSocialCredibility(response, maxFollowers),
+  };
+}
+
+async function historicalCredibility(userID: string) {
+  //buscar en mongodb 
+  const response = await MongoDBData(userID);
+
+  let dato1 = 10;
+  let dato2 = 20;
+  let dato3 = 30;
+  let contador = 3;
+
+
+  ////console.log("es la ultima response", response);
+  return {
+    credibility: (dato1+dato2+dato3)/contador,
   };
 }
 
@@ -439,6 +492,7 @@ export {
   twitterUserCredibility,
   calculateTweetCredibility,
   socialCredibility,
+  historicalCredibility,
   scrapperTwitterUserCredibility,
   scrapedSocialCredibility,
   scrapedtweetCredibility,

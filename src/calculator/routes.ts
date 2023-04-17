@@ -2,6 +2,7 @@ import express from "express";
 import {
   calculateTextCredibility,
   socialCredibility,
+  historicalCredibility,
   twitterUserCredibility,
   calculateTweetCredibility,
   scrapperTwitterUserCredibility,
@@ -109,6 +110,22 @@ calculatorRoutes.get(
 );
 
 calculatorRoutes.get(
+  "/twitter/historical/:userId",
+
+  asyncWrap(async function (req, res) {
+    /* const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errorMapper(errors.array());
+    } */
+    const historicalCredibilityVal = await historicalCredibility(
+      req.params.userId
+    );
+    res.send(historicalCredibilityVal);
+  })
+);
+
+
+calculatorRoutes.get(
   "/twitter/tweets",
   validate("tweetCredibility"),
   asyncWrap(async function (req, res) {
@@ -128,12 +145,41 @@ calculatorRoutes.get(
           weightSocial: +req.query.weightSocial,
           weightText: +req.query.weightText,
           weightUser: +req.query.weightUser,
+          weightHistoric: +req.query.weightHistoric,
         },
         +req.query.maxFollowers
       )
     );
   })
 );
+
+/*calculatorRoutes.get(
+  "/twitter/tweets1",
+  validate("tweetCredibility"),
+  asyncWrap(async function (req, res) {
+    console.log("Los DATOS DEL QUERY SON: /twitter/tweets ", req.query);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errorMapper(errors.array());
+    }
+    res.json(
+      await calculateTweetCredibility(
+        req.query.usuario,
+        req.query.tweetId,
+        {
+          weightBadWords: +req.query.weightBadWords,
+          weightMisspelling: +req.query.weightMisspelling,
+          weightSpam: +req.query.weightSpam,
+          weightSocial: +req.query.weightSocial,
+          weightText: +req.query.weightText,
+          weightUser: +req.query.weightUser,
+          weightHistoric: +req.query.weightHistoric,
+        },
+        +req.query.maxFollowers
+      )
+    );
+  })
+);*/
 
 calculatorRoutes.get(
   "/social/scrape",
@@ -174,6 +220,7 @@ calculatorRoutes.get(
           weightText: +req.query.weightText,
           weightUser: +req.query.weightUser,
           weightSocial: +req.query.weightSocial,
+          weightHistoric: +req.query.weightHistoric,
         },
         {
           verified: req.query.verified === "true",

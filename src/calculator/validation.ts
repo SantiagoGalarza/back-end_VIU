@@ -110,6 +110,9 @@ export function validate(method: string) : any {
       check('weightSocial', 'weightSocial.REQUIRED').exists(),
       check('weightSocial', 'weightSocial.NUMBER').isFloat(),
       check('weightSocial', 'weightSocial.NOT_IN_RANGE').isFloat({min : 0, max : 100}),
+      check('weightHistoric', 'weightHistoric.REQUIRED').exists(),
+      check('weightHistoric', 'weightHistoric.NUMBER').isFloat(),
+      check('weightHistoric', 'weightHistoric.NOT_IN_RANGE').isFloat({min : 0, max : 100}),
       check('maxFollowers', 'maxFollowers.NUMBER').isInt(),
       check('maxFollowers', 'maxFollowers.POSITIVE').isInt({gt: -1}),
       check('WEIGHT_TEXT_CRED_SUM_NOT_1', 'customValidation.WEIGHT_TEXT_CRED_NOT_EQUALS_TO_1')
@@ -117,7 +120,7 @@ export function validate(method: string) : any {
           Math.abs(parseFloat(obj.req.query.weightSpam) + parseFloat(obj.req.query.weightBadWords) + parseFloat(obj.req.query.weightMisspelling) - 1) < Number.EPSILON),
       check('WEIGHT_TWEET_CRED_SUM_NOT_1', 'customValidation.WEIGHT_TWEET_CRED_NOT_EQUALS_TO_1')
         .custom((val: string, obj: any) =>
-          Math.abs(parseFloat(obj.req.query.weightText) + parseFloat(obj.req.query.weightUser) + parseFloat(obj.req.query.weightSocial) - 1) < Number.EPSILON),
+          Math.abs(parseFloat(obj.req.query.weightText) + parseFloat(obj.req.query.weightUser) + parseFloat(obj.req.query.weightSocial) + parseFloat(obj.req.query.weightHistoric) - 1) < Number.EPSILON),
     ]
   }
   }

@@ -14,6 +14,7 @@ export interface TweetCredibilityWeights extends TextCredibilityWeights {
   weightText: number;
   weightSocial: number;
   weightUser: number;
+  weightHistoric: number;
 }
 
 export interface TwitterUser {
